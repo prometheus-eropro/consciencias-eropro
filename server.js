@@ -6,30 +6,28 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const OpenAI = require('openai');
+const { Configuration, OpenAIApi } = require('openai');
 
-const openai = new OpenAI({
+const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY
 });
+
+const openai = new OpenAIApi(configuration);
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-const PORT = process.env.PORT || 3000;
-
-// Configuração da API OpenAI
-const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
-const openai = new OpenAIApi(configuration);
+// Porta fixa conforme orientação
+const PORT = process.env.PORT || 10000;
 
 // Dados dos usuários (CSV local)
 let usuarios = [];
 function carregarCSV() {
     const resultados = [];
-        fs.createReadStream(path.join(__dirname, 'public', 'users.csv'))
+    fs.createReadStream(path.join(__dirname, 'public', 'users.csv'))
         .on('error', (err) => console.error('Erro ao ler CSV:', err))
-        .on('data', (chunk) => console.log('Lendo CSV...'))
         .pipe(require('csv-parser')())
         .on('data', (data) => resultados.push(data))
         .on('end', () => {
@@ -107,12 +105,12 @@ app.post('/api/gpt', async (req, res) => {
 
         return res.status(200).json({ resposta });
     } catch (err) {
-        console.error('Erro na API GPT:', err);
+        console.error('Erro na API GPT:', err.response?.data || err.message);
         return res.status(500).json({ error: 'Falha ao consultar GPT.' });
     }
 });
 
 // Inicia o servidor
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
