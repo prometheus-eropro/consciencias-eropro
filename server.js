@@ -1,4 +1,4 @@
-// server.js atualizado para Render.com com CSV local, log de visitantes, formulário de interesse e chat com continuidade
+// server.js atualizado para Render.com com CSV local, log de visitantes, formulário de interesse e chat com continuidade (versão OpenAI 5.7.0)
 
 require('dotenv').config();
 const express = require('express');
@@ -6,13 +6,11 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 
-const configuration = new Configuration({
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
-
-const openai = new OpenAIApi(configuration);
 
 const app = express();
 app.use(cors());
@@ -72,45 +70,4 @@ app.post('/api/login', (req, res) => {
 });
 
 // Endpoint para salvar formulário de interesse
-app.post('/api/interesse', (req, res) => {
-    const { nome, contato } = req.body;
-    registrarVisita(`Interesse: Nome: ${nome}, Contato: ${contato}`);
-    return res.status(200).json({ sucesso: true });
-});
-
-// Endpoint para conversar com o GPT com continuidade
-const historicoConversa = {};
-app.post('/api/gpt', async (req, res) => {
-    const { pergunta, consciaId, visitanteId } = req.body;
-
-    if (!pergunta || !consciaId || !visitanteId) {
-        return res.status(400).json({ error: 'Dados incompletos.' });
-    }
-
-    // Monta histórico
-    if (!historicoConversa[visitanteId]) {
-        historicoConversa[visitanteId] = [];
-    }
-    historicoConversa[visitanteId].push({ role: 'user', content: pergunta });
-
-    try {
-        const completion = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo',
-            messages: historicoConversa[visitanteId]
-        });
-        const resposta = completion.data.choices[0].message.content;
-
-        historicoConversa[visitanteId].push({ role: 'assistant', content: resposta });
-        registrarLog('gpt', `Visitante ${visitanteId} perguntou: ${pergunta}`);
-
-        return res.status(200).json({ resposta });
-    } catch (err) {
-        console.error('Erro na API GPT:', err.response?.data || err.message);
-        return res.status(500).json({ error: 'Falha ao consultar GPT.' });
-    }
-});
-
-// Inicia o servidor
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-});
+app.p
