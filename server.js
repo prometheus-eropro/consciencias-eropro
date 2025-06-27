@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 10000;
 let usuarios = [];
 function carregarCSV() {
     const resultados = [];
-    fs.createReadStream(path.join(__dirname, 'public', 'users.csv'))
+    fs.createReadStream(path.join(__dirname, 'data', 'users.csv'))
         .on('error', (err) => console.error('Erro ao ler CSV:', err))
         .pipe(require('csv-parser')())
         .on('data', (data) => resultados.push(data))
