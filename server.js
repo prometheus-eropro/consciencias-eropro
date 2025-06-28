@@ -1,4 +1,4 @@
-// server.js completo e revisado para Render.com com CSV local, logs e API OpenAI GPT-3.5 Turbo
+// server.js completo e revisado para Render.com com CSV dinâmico, logs e API OpenAI GPT-3.5 Turbo
 
 require('dotenv').config();
 const express = require('express');
@@ -7,6 +7,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
+const csvParser = require('csv-parser');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -21,19 +22,37 @@ const PORT = process.env.PORT || 10000;
 
 // ====================== CSV ===========================
 let usuarios = [];
-function carregarCSV() {
+
+function carregarCSV(callback) {
     const resultados = [];
     const filePath = path.join(__dirname, 'public', 'users.csv');
+
     fs.createReadStream(filePath)
-        .on('error', (err) => console.error('Erro ao ler CSV:', err))
-        .pipe(require('csv-parser')())
+        .on('error', (err) => {
+            console.error('Erro ao ler CSV:', err);
+            if (callback) callback(err);
+        })
+        .pipe(csvParser())
         .on('data', (data) => resultados.push(data))
         .on('end', () => {
             usuarios = resultados;
             console.log('CSV carregado com sucesso!');
+            if (callback) callback(null);
         });
 }
+
+// Carregar ao iniciar
 carregarCSV();
+
+// Atualizar CSV a cada requisição de login ou chat
+function atualizarCSV() {
+    return new Promise((resolve, reject) => {
+        carregarCSV((err) => {
+            if (err) return reject(err);
+            resolve();
+        });
+    });
+}
 
 // ====================== Logs =========================
 function registrarVisita(data) {
@@ -51,8 +70,16 @@ function registrarLog(tipo, mensagem) {
 }
 
 // ====================== API ==========================
-// Login
-app.post('/api/login', (req, res) => {
+
+// Rota raiz obrigatória para o Render
+app.get('/', (req, res) => {
+    res.send('Servidor Consciências EROPRO rodando corretamente.');
+});
+
+// Login com atualização do CSV
+app.post('/api/login', async (req, res) => {
+    await atualizarCSV();
+
     const { email, senha } = req.body;
 
     const usuario = usuarios.find(u =>
@@ -74,6 +101,50 @@ app.post('/api/login', (req, res) => {
     });
 });
 
+// Chat com validação e atualização do CSV
+app.post('/api/chat', async (req, res) => {
+    await atualizarCSV();
+
+    const { email, senha, mensagens, consciencia } = req.body;
+
+    if (!mensagens || !Array.isArray(mensagens)) {
+        return res.status(400).json({ error: 'Mensagens inválidas.' });
+    }
+
+    const usuario = usuarios.find(u =>
+        (u.email_ou_celular === email || u.email === email) &&
+        u.senha === senha &&
+        u.ativo.toLowerCase() === 'true'
+    );
+
+    if (!usuario) {
+        registrarLog('chat', `Tentativa de chat sem autorização para: ${email}`);
+        return res.status(401).json({ error: 'Acesso não autorizado.' });
+    }
+
+    const conscienciasLiberadas = usuario.cons_cias ? usuario.cons_cias.split(',').map(item => item.trim()) : [];
+
+    if (!conscienciasLiberadas.includes(consciencia)) {
+        return res.status(403).json({ error: 'Consciência não autorizada para este usuário.' });
+    }
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: mensagens
+        });
+
+        const resposta = completion.choices[0].message.content;
+
+        registrarLog('chat', `Usuario: ${email} | Consciência: ${consciencia} | Pergunta: ${mensagens[mensagens.length - 1].content} | Resposta: ${resposta}`);
+
+        return res.status(200).json({ resposta });
+    } catch (error) {
+        console.error('Erro no chat:', error);
+        return res.status(500).json({ error: 'Erro ao processar a resposta.' });
+    }
+});
+
 // Registro de formulário de interesse
 app.post('/api/interesse', (req, res) => {
     const { nome, email, mensagem } = req.body;
@@ -86,32 +157,7 @@ app.post('/api/interesse', (req, res) => {
     return res.status(200).json({ sucesso: true, mensagem: 'Interesse registrado com sucesso.' });
 });
 
-// Chat com continuidade via OpenAI
-app.post('/api/chat', async (req, res) => {
-    const { mensagens } = req.body;
-
-    if (!mensagens || !Array.isArray(mensagens)) {
-        return res.status(400).json({ error: 'Mensagens inválidas.' });
-    }
-
-    try {
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: mensagens
-        });
-
-        const resposta = completion.choices[0].message.content;
-
-        registrarLog('chat', `Pergunta: ${mensagens[mensagens.length - 1].content} | Resposta: ${resposta}`);
-
-        return res.status(200).json({ resposta });
-    } catch (error) {
-        console.error('Erro no chat:', error);
-        return res.status(500).json({ error: 'Erro ao processar a resposta.' });
-    }
-});
-
-// Visitas
+// Registro de visitas
 app.post('/api/visita', (req, res) => {
     const { visitante } = req.body;
 
