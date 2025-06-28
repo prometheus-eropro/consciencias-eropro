@@ -25,7 +25,7 @@ let usuarios = [];
 
 function carregarCSV(callback) {
     const resultados = [];
-    const filePath = path.join(__dirname, 'data', 'users.csv');
+    const filePath = path.join(__dirname, 'usuarios.csv');
 
     fs.createReadStream(filePath)
         .on('error', (err) => {
@@ -170,6 +170,11 @@ app.post('/api/visita', (req, res) => {
 });
 
 // =================== Servidor =========================
+// Rota para servir o CSV diretamente
+app.get('/users.csv', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'users.csv'));
+});
+
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
