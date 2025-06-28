@@ -1,127 +1,175 @@
+// server.js completo e revisado para Render.com com CSV dinâmico, logs e API OpenAI GPT-3.5 Turbo
+
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const csv = require('csv-parser');
-const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const OpenAI = require('openai');
+const csvParser = require('csv-parser');
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Links das planilhas no Google Drive
-const LINK_PLANILHA_ACESSOS = 'https://drive.google.com/uc?export=download&id=12XCdxrGCujD6AIfgOTBF0uz0_mCuocsvnUSvvfVpj70';
-const LINK_PLANILHA_CONSCIENCIA = 'https://drive.google.com/uc?export=download&id=1RyOi80PamsOKEomBfW42fGYSP9FBFLYMB4-giQcCK6c';
+// ====================== CSV ===========================
+let usuarios = [];
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+function carregarCSV(callback) {
+    const resultados = [];
+    const filePath = path.join(__dirname, 'public', 'users.csv');
 
-// Históricos separados por visitante
-const historicoConversa = {};
-
-// Função para ler CSV online
-async function lerPlanilhaCSV(link) {
-  try {
-    const response = await axios.get(link, { responseType: 'stream' });
-    return new Promise((resolve, reject) => {
-      const resultados = [];
-      response.data
-        .pipe(csv())
+    fs.createReadStream(filePath)
+        .on('error', (err) => {
+            console.error('Erro ao ler CSV:', err);
+            if (callback) callback(err);
+        })
+        .pipe(csvParser())
         .on('data', (data) => resultados.push(data))
-        .on('end', () => resolve(resultados))
-        .on('error', (err) => reject(err));
-    });
-  } catch (error) {
-    console.error('Erro ao ler planilha:', error);
-    throw error;
-  }
+        .on('end', () => {
+            usuarios = resultados;
+            console.log('CSV carregado com sucesso!');
+            if (callback) callback(null);
+        });
 }
 
-// Rota de login e consulta de consciências
+// Carregar ao iniciar
+carregarCSV();
+
+// Atualizar CSV a cada requisição de login ou chat
+function atualizarCSV() {
+    return new Promise((resolve, reject) => {
+        carregarCSV((err) => {
+            if (err) return reject(err);
+            resolve();
+        });
+    });
+}
+
+// ====================== Logs =========================
+function registrarVisita(data) {
+    const logLine = `${new Date().toISOString()} - ${data}\n`;
+    fs.appendFile('logs/visitas.log', logLine, (err) => {
+        if (err) console.error('Erro ao registrar visita:', err);
+    });
+}
+
+function registrarLog(tipo, mensagem) {
+    const logLine = `${new Date().toISOString()} - ${mensagem}\n`;
+    fs.appendFile(`logs/${tipo}.log`, logLine, (err) => {
+        if (err) console.error('Erro ao registrar log:', err);
+    });
+}
+
+// ====================== API ==========================
+
+// Rota raiz obrigatória para o Render
+app.get('/', (req, res) => {
+    res.send('Servidor Consciências EROPRO rodando corretamente.');
+});
+
+// Login com atualização do CSV
 app.post('/api/login', async (req, res) => {
-  const { emailOuCelular, senha } = req.body;
+    await atualizarCSV();
 
-  if (!emailOuCelular || !senha) {
-    return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
-  }
+    const { email, senha } = req.body;
 
-  try {
-    const acessos = await lerPlanilhaCSV(LINK_PLANILHA_ACESSOS);
-
-    const usuario = acessos.find(u =>
-      u.email_ou_celular.trim() === emailOuCelular.trim() &&
-      u.senha.trim() === senha.trim() &&
-      u.ativo.trim().toLowerCase() === 'sim'
+    const usuario = usuarios.find(u =>
+        (u.email_ou_celular === email || u.email === email) &&
+        u.senha === senha &&
+        u.ativo.toLowerCase() === 'true'
     );
 
     if (!usuario) {
-      return res.status(401).json({ error: 'Credenciais inválidas ou acesso bloqueado.' });
+        registrarLog('login', `Tentativa de login falhou para: ${email}`);
+        return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
-    const conscienciasLiberadas = usuario.cons_cias
-      ? usuario.cons_cias.split(',').map(item => item.trim())
-      : [];
+    registrarLog('login', `Login bem-sucedido para: ${email}`);
 
-    return res.status(200).json({ consciencias: conscienciasLiberadas });
-
-  } catch (error) {
-    console.error('Erro no login:', error);
-    return res.status(500).json({ error: 'Erro interno no servidor.' });
-  }
-});
-
-// Rota para conversar com uma consciência
-app.post('/api/gpt', async (req, res) => {
-  const { visitanteId, consciaId, pergunta } = req.body;
-
-  if (!visitanteId || !consciaId || !pergunta) {
-    return res.status(400).json({ error: 'Campos visitanteId, consciaId e pergunta são obrigatórios.' });
-  }
-
-  try {
-    // Carregar planilha de consciências
-    const consciencias = await lerPlanilhaCSV(LINK_PLANILHA_CONSCIENCIA);
-
-    const consciencia = consciencias.find(c => c.id.trim() === consciaId.trim());
-
-    if (!consciencia) {
-      return res.status(404).json({ error: 'Consciência não encontrada.' });
-    }
-
-    // Configurar histórico
-    if (!historicoConversa[visitanteId]) {
-      historicoConversa[visitanteId] = [];
-    }
-
-    // Adicionar a pergunta ao histórico
-    historicoConversa[visitanteId].push({ role: 'user', content: pergunta });
-
-    // Enviar para o GPT-3.5 Turbo
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: consciencia.prompt_base },
-        ...historicoConversa[visitanteId],
-      ],
+    return res.status(200).json({
+        sucesso: true,
+        consciencias: usuario.cons_cias ? usuario.cons_cias.split(',').map(item => item.trim()) : []
     });
-
-    const resposta = completion.choices[0].message.content;
-
-    // Adicionar resposta ao histórico
-    historicoConversa[visitanteId].push({ role: 'assistant', content: resposta });
-
-    return res.status(200).json({ resposta });
-
-  } catch (error) {
-    console.error('Erro na conversa:', error);
-    return res.status(500).json({ error: 'Erro interno ao consultar a consciência.' });
-  }
 });
 
+// Chat com validação e atualização do CSV
+app.post('/api/chat', async (req, res) => {
+    await atualizarCSV();
+
+    const { email, senha, mensagens, consciencia } = req.body;
+
+    if (!mensagens || !Array.isArray(mensagens)) {
+        return res.status(400).json({ error: 'Mensagens inválidas.' });
+    }
+
+    const usuario = usuarios.find(u =>
+        (u.email_ou_celular === email || u.email === email) &&
+        u.senha === senha &&
+        u.ativo.toLowerCase() === 'true'
+    );
+
+    if (!usuario) {
+        registrarLog('chat', `Tentativa de chat sem autorização para: ${email}`);
+        return res.status(401).json({ error: 'Acesso não autorizado.' });
+    }
+
+    const conscienciasLiberadas = usuario.cons_cias ? usuario.cons_cias.split(',').map(item => item.trim()) : [];
+
+    if (!conscienciasLiberadas.includes(consciencia)) {
+        return res.status(403).json({ error: 'Consciência não autorizada para este usuário.' });
+    }
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: mensagens
+        });
+
+        const resposta = completion.choices[0].message.content;
+
+        registrarLog('chat', `Usuario: ${email} | Consciência: ${consciencia} | Pergunta: ${mensagens[mensagens.length - 1].content} | Resposta: ${resposta}`);
+
+        return res.status(200).json({ resposta });
+    } catch (error) {
+        console.error('Erro no chat:', error);
+        return res.status(500).json({ error: 'Erro ao processar a resposta.' });
+    }
+});
+
+// Registro de formulário de interesse
+app.post('/api/interesse', (req, res) => {
+    const { nome, email, mensagem } = req.body;
+    if (!nome || !email || !mensagem) {
+        return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    registrarLog('interesse', `Nome: ${nome}, Email: ${email}, Mensagem: ${mensagem}`);
+
+    return res.status(200).json({ sucesso: true, mensagem: 'Interesse registrado com sucesso.' });
+});
+
+// Registro de visitas
+app.post('/api/visita', (req, res) => {
+    const { visitante } = req.body;
+
+    if (!visitante) {
+        return res.status(400).json({ error: 'Dados de visitante inválidos.' });
+    }
+
+    registrarVisita(visitante);
+    return res.status(200).json({ sucesso: true });
+});
+
+// =================== Servidor =========================
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
