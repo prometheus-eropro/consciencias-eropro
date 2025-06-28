@@ -25,7 +25,7 @@ let usuarios = [];
 
 function carregarCSV(callback) {
     const resultados = [];
-    const filePath = path.join(__dirname, 'public', 'usuários.csv');
+    const filePath = path.join(__dirname, 'public', 'usuarios.csv');
 
     fs.createReadStream(filePath)
         .on('error', (err) => {
