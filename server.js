@@ -172,4 +172,6 @@ app.post('/api/visita', (req, res) => {
 // =================== Servidor =========================
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
+app.get('/users.csv', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'users.csv'));
 });
