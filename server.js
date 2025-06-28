@@ -170,8 +170,12 @@ app.post('/api/visita', (req, res) => {
 });
 
 // =================== Servidor =========================
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Rota para servir o CSV diretamente
 app.get('/users.csv', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'users.csv'));
+});
+
+// Iniciar o servidor
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
