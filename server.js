@@ -1,4 +1,7 @@
 // server.js completo e revisado para Render.com com CSV dinâmico, logs e API OpenAI GPT-3.5 Turbo
+
+const fs = require('fs'); // Correção: primeiro importar
+
 if (!fs.existsSync('logs')) {
     fs.mkdirSync('logs');
 }
@@ -7,10 +10,10 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
 const csvParser = require('csv-parser');
+const axios = require('axios');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -65,8 +68,6 @@ function registrarVisita(data) {
     });
 }
 
-const axios = require('axios');
-
 function registrarLog(tipo, mensagem, usuario = 'Sistema') {
     const logData = {
         tipo: tipo,
@@ -107,9 +108,7 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
-    registrarLog('login', `Login bem-sucedido para: ${email}`);
-    registrarLog('login', `Tentativa de login falhou para: ${email}`, email);
-    registrarLog('chat', `Usuario: ${email} | Consciência: ${consciencia} | Pergunta: ${mensagens[mensagens.length - 1].content} | Resposta: ${resposta}`, email);
+    registrarLog('login', `Login bem-sucedido para: ${email}`, email);
 
     return res.status(200).json({
         sucesso: true,
