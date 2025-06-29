@@ -1,4 +1,7 @@
 // server.js completo e revisado para Render.com com CSV dinâmico, logs e API OpenAI GPT-3.5 Turbo
+if (!fs.existsSync('logs')) {
+    fs.mkdirSync('logs');
+}
 
 require('dotenv').config();
 const express = require('express');
@@ -62,18 +65,29 @@ function registrarVisita(data) {
     });
 }
 
-function registrarLog(tipo, mensagem) {
-    const logLine = `${new Date().toISOString()} - ${mensagem}\n`;
-    fs.appendFile(`logs/${tipo}.log`, logLine, (err) => {
-        if (err) console.error('Erro ao registrar log:', err);
-    });
+const axios = require('axios');
+
+function registrarLog(tipo, mensagem, usuario = 'Sistema') {
+    const logData = {
+        tipo: tipo,
+        usuario: usuario,
+        detalhes: mensagem
+    };
+
+    axios.post('https://script.google.com/macros/s/AKfycbz2Nz9MdsM-0g5CQWwIglNjyu4oq9Cx1Sc4-VSje4tamQNzxJP7hy61hr2YvugLXs0H/exec', logData)
+        .then(response => {
+            console.log('Log registrado no Google Sheets com sucesso.');
+        })
+        .catch(error => {
+            console.error('Erro ao registrar log no Google Sheets:', error);
+        });
 }
 
 // ====================== API ==========================
 
 // Rota raiz obrigatória para o Render
 app.get('/', (req, res) => {
-    res.send('Servidor Consciências EROPRO rodando corretamente.');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Login com atualização do CSV
@@ -94,6 +108,8 @@ app.post('/api/login', async (req, res) => {
     }
 
     registrarLog('login', `Login bem-sucedido para: ${email}`);
+    registrarLog('login', `Tentativa de login falhou para: ${email}`, email);
+    registrarLog('chat', `Usuario: ${email} | Consciência: ${consciencia} | Pergunta: ${mensagens[mensagens.length - 1].content} | Resposta: ${resposta}`, email);
 
     return res.status(200).json({
         sucesso: true,
@@ -171,8 +187,8 @@ app.post('/api/visita', (req, res) => {
 
 // =================== Servidor =========================
 // Rota para servir o CSV diretamente
-app.get('/users.csv', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'users.csv'));
+app.get('/usuarios.csv', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'usuarios.csv'));
 });
 
 app.listen(PORT, () => {
