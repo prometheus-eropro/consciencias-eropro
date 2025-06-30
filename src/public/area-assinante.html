@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Área do Assinante - ConsciêncIAs</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    .card h3 { margin: 0 0 5px 0; }
+    .card p { margin: 5px 0 10px; }
+    #chatbox { border: 2px solid #333; padding: 10px; width: 100%; max-width: 500px;
+               position: fixed; bottom: 20px; right: 20px; background: #f9f9f9; display: none; }
+    #chatlog { max-height: 300px; overflow-y: auto; padding: 5px; background: #fff; margin-bottom: 5px; }
+    #chatlog div { margin-bottom: 4px; }
+    #chatlog .user { font-weight: bold; }
+    #chatlog .bot { color: #070; }
+  </style>
+</head>
+<body>
+  <h1>Área do Assinante</h1>
+  <p>Bem-vindo! Abaixo estão suas ConsciêncIAs disponíveis:</p>
+  <button id="logoutBtn">Sair</button>
+
+  <h2>Minhas ConsciêncIAs</h2>
+  <div id="cardsContainer"></div>
+
+  <!-- Janela de chat para assinante (igual estrutura, sem limite de perguntas) -->
+  <div id="chatbox">
+    <div id="chatlog"></div>
+    <input type="text" id="chatInput" placeholder="Pergunte algo..." />
+    <button id="sendChat">Enviar</button>
+    <button id="closeChat">Fechar</button>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    // Se não estiver logado, redireciona para login
+    if (!token) {
+      window.location.href = 'index.html';
+    }
+
+    // Carrega ConsciêncIAs do usuário logado
+    async function loadConsciencias() {
+      try {
+        const res = await fetch('/api/consciencias', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const consList = await res.json();
+        const container = document.getElementById('cardsContainer');
+        container.innerHTML = "";
+        consList.forEach(cons => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = "<h3>" + cons.title + "</h3><p>" + cons.description + "</p>";
+          const btn = document.createElement('button');
+          btn.textContent = 'Abrir Chat';
+          btn.className = 'chat-btn';
+          btn.dataset.conscia = cons.id;
+          card.appendChild(btn);
+          container.appendChild(card);
+        });
+        setupChatButtons();
+      } catch (e) {
+        console.error("Erro ao carregar ConsciêncIAs do assinante:", e);
+      }
+    }
+
+    // Eventos para abrir chat ao clicar em "Abrir Chat"
+    function setupChatButtons() {
+      document.querySelectorAll('.chat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const consciaId = btn.dataset.conscia;
+          currentConscia = consciaId;
+          document.getElementById('chatlog').innerHTML = "";
+          document.getElementById('chatbox').style.display = 'block';
+        });
+      });
+    }
+
+    // Envio de mensagem no chat (similar ao visitante, mas com token)
+    let currentConscia = null;
+    document.getElementById('sendChat').addEventListener('click', async () => {
+      const question = document.getElementById('chatInput').value.trim();
+      if (!question || !currentConscia) return;
+      const logDiv = document.getElementById('chatlog');
+      const userLine = document.createElement('div');
+      userLine.className = 'user';
+      userLine.textContent = "Você: " + question;
+      logDiv.appendChild(userLine);
+      document.getElementById('chatInput').value = "";
+      // Chamada API GPT autenticada
+      try {
+        const res = await fetch('/api/gpt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ question: question, conscia: currentConscia })
+        });
+        const data = await res.json();
+        const botLine = document.createElement('div');
+        if (res.ok && data.answer) {
+          botLine.className = 'bot';
+          botLine.textContent = currentConscia + ": " + data.answer;
+        } else {
+          botLine.className = 'bot';
+          botLine.textContent = "Erro: " + (data.error || "Falha na resposta");
+        }
+        logDiv.appendChild(botLine);
+        logDiv.scrollTop = logDiv.scrollHeight;
+      } catch (err) {
+        console.error("Erro ao consultar GPT:", err);
+      }
+    });
+    // Fechar chat
+    document.getElementById('closeChat').addEventListener('click', () => {
+      document.getElementById('chatbox').style.display = 'none';
+      currentConscia = null;
+    });
+
+    // Logout: limpa token e volta à página inicial
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    });
+
+    // Carrega lista de ConsciêncIAs do usuário na inicialização
+    loadConsciencias();
+  </script>
+</body>
+</html>

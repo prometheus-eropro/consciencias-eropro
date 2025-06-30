@@ -1,0 +1,44 @@
+import fs from 'fs';
+import path from 'path';
+
+export default async function handler(req, res) {
+  const { emailOuCelular } = req.body;
+
+  if (!emailOuCelular) {
+    return res.status(400).json({ error: 'O campo emailOuCelular é obrigatório.' });
+  }
+
+  try {
+    // Local da planilha CSV dentro do projeto
+    const filePath = path.join(process.cwd(), 'data', 'users.csv');
+    const csvData = fs.readFileSync(filePath, 'utf8');
+
+    // Converter CSV para array de objetos
+    const linhas = csvData.trim().split('\n').slice(1); // Ignorar cabeçalho
+
+    const acessos = linhas.map((linha) => {
+      const [email, senha, ativo, data_ativacao, nome_cliente, data_exclusao, consciencias] = linha.split(',');
+
+      return {
+        emailOuCelular: email.trim(),
+        senha: senha.trim(),
+        ativo: ativo.trim(),
+        data_ativacao: data_ativacao.trim(),
+        nome_cliente: nome_cliente.trim(),
+        data_exclusao: data_exclusao.trim(),
+        consciencias: consciencias ? consciencias.split(';').map((item) => item.trim()) : []
+      };
+    });
+
+    const usuario = acessos.find((acesso) => acesso.emailOuCelular === emailOuCelular);
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    return res.status(200).json({ consciencias: usuario.consciencias });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro interno ao listar consciências' });
+  }
+}
