@@ -88,8 +88,10 @@ function registrarLog(tipo, mensagem, usuario = 'Sistema') {
 
 // Rota raiz obrigatória para o Render
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
-    res.sendFile('public/index.html', { root: '.' });
+    res.sendFile('index.html', { root: path.join(process.cwd(), 'public') });
 });
 
 // Login com atualização do CSV
