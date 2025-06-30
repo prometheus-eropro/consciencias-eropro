@@ -1,7 +1,6 @@
 // server.js completo e revisado para Render.com com CSV dinâmico, logs e API OpenAI GPT-3.5 Turbo
 
-const fs = require('fs'); // Correção: primeiro importar
-
+const fs = require('fs');
 if (!fs.existsSync('logs')) {
     fs.mkdirSync('logs');
 }
@@ -22,7 +21,7 @@ const openai = new OpenAI({
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 10000;
 
@@ -31,7 +30,7 @@ let usuarios = [];
 
 function carregarCSV(callback) {
     const resultados = [];
-    const filePath = path.join(__dirname, 'usuarios.csv');
+    const filePath = path.join(process.cwd(), 'usuarios.csv');
 
     fs.createReadStream(filePath)
         .on('error', (err) => {
@@ -89,7 +88,7 @@ function registrarLog(tipo, mensagem, usuario = 'Sistema') {
 // Rota raiz obrigatória para o Render
 
 app.get('/', (req, res) => {
-    res.sendFile('index.html', { root: path.join(__dirname, 'public') });
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Login com atualização do CSV
@@ -188,7 +187,7 @@ app.post('/api/visita', (req, res) => {
 // =================== Servidor =========================
 // Rota para servir o CSV diretamente
 app.get('/usuarios.csv', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'usuarios.csv'));
+    res.sendFile('usuarios.csv', { root: process.cwd() });
 });
 
 app.listen(PORT, () => {
