@@ -87,8 +87,9 @@ function registrarLog(tipo, mensagem, usuario = 'Sistema') {
 // ====================== API ==========================
 
 // Rota raiz obrigatória para o Render
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile('index.html', { root: path.join(__dirname, 'public') });
 });
 
 // Login com atualização do CSV
