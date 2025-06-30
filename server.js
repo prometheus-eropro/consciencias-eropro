@@ -23,7 +23,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT; // Use apenas a porta definida pelo Render
 
 // ====================== CSV ===========================
 let usuarios = [];
