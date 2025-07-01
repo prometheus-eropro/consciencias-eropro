@@ -21,16 +21,16 @@ const openai = new OpenAI({
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT; // Use apenas a porta definida pelo Render
 
 // ====================== CSV ===========================
 let usuarios = [];
 
 function carregarCSV(callback) {
     const resultados = [];
-    const filePath = path.join(__dirname, 'public', 'usuarios.csv'); // Corrigido
+    const filePath = path.join(process.cwd(), 'usuarios.csv');
 
     fs.createReadStream(filePath)
         .on('error', (err) => {
@@ -87,7 +87,7 @@ function registrarLog(tipo, mensagem, usuario = 'Sistema') {
 
 // Rota raiz obrigatória para o Render
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'src', 'public', 'index.html'));
 });
 
 // Login com atualização do CSV
@@ -184,10 +184,9 @@ app.post('/api/visita', (req, res) => {
 });
 
 // =================== Servidor =========================
-
 // Rota para servir o CSV diretamente
 app.get('/usuarios.csv', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'usuarios.csv'));
+    res.sendFile('usuarios.csv', { root: process.cwd() });
 });
 
 app.listen(PORT, () => {
