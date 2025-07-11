@@ -193,13 +193,18 @@
   <h2 style="color:#3e6bee;text-align:center;margin:2.8em 0 1em 0;font-size:1.4em;">Depoimentos</h2>
   <div id="bloco-depoimentos" class="bloco-cards"></div>
 
-  <div class="area-assinante">
-    <h3>Área do Assinante</h3>
-    <a href="area-assinante.html" class="btn-restrito">Entrar/Cadastrar</a>
-    <p>Acesse conteúdos exclusivos com login e senha!</p>
+<div style="background: #002855; color: white; padding: 20px 10px; text-align: center;">
+  <div style="font-size: 1.6em; font-weight: bold;">Tecnologia com ConsciêncIA gera Resultado</div>
+  <div style="margin-top: 8px; font-size: 1.15em;">
+    Para <span style="color:#3ee770; font-weight:900;">TESTAR</span> uma ConsciêncIA, entre em contato:
   </div>
-
- <footer>
+  <div style="margin-top: 6px; font-size: 1.05em;">
+    WhatsApp: (28) 99969-2303 &nbsp;|&nbsp;
+    Instagram: @edgar_rocha_oliveira &nbsp;|&nbsp;
+    Email: assistentes.prometheus@gmail.com
+  </div>
+</div>
+  <footer>
   <button onclick="toggleFAQ()" style="background:#3ee770;color:#232630;font-weight:700;padding:0.7em 2em;border:none;border-radius:1em;cursor:pointer;margin:2em auto;display:block;font-size:1.08em;">
     Ver Dúvidas Frequentes
   </button>
@@ -250,15 +255,6 @@
       faq.style.display = (faq.style.display === "none" ? "block" : "none");
     }
 
-    function testarAgora(consciaID) {
-      if (localStorage.getItem('testeRealizado-' + consciaID)) {
-        alert('O teste gratuito para esta ConsciêncIA já foi utilizado neste dispositivo. Para continuar, solicite acesso.');
-        return;
-      }
-      alert('Testando ConsciêncIA: ' + consciaID);
-      localStorage.setItem('testeRealizado-' + consciaID, 'true');
-    }
-
     async function carregarDados() {
       try {
         const resposta = await fetch('https://script.google.com/macros/s/AKfycbzxonxz2OZ-FudBx5_8IaONK3ggg19zQZ7kI5kthpnvcbs4ZpK-bdPSOyP6qMG02HjNAA/exec');
@@ -271,7 +267,15 @@
               cardsHTML += `<div class='card'>
                 <h2>${card["Nome da ConsciêncIA"]}</h2>
                 <div class='resumo'>${card["Resumo"]}</div>
-                <button class='testar-agora' onclick='testarAgora("${card["Nome da ConsciêncIA"]}")'>Testar Agora</button>
+                <div style="margin-top:1em;font-size:0.95em;color:#3e6bee;">
+                 Para testar, fale com a gente:<br>
+                 <a href="https://wa.me/5528999692303" target="_blank">📲 WhatsApp</a> &nbsp;|&nbsp;
+                 <a href="https://instagram.com/edgar_rocha_oliveira" target="_blank">Instagram</a> &nbsp;|&nbsp;
+                 <a href="mailto:assistentes.prometheus@gmail.com">Email</a>
+                 </div>
+                 <a href="area-assinante.html" style="margin-top:1.2em; padding:10px 25px; background:#4caf50; color:white; font-weight:900; border-radius:8px; text-decoration:none; font-size:1em; box-shadow:0 2px 5px #0002;">
+                 🚀 Entrar
+                 </a>
               </div>`;
             }
           });
@@ -288,7 +292,6 @@
         }
         document.getElementById("faq-bloco").innerHTML = faqHTML || "<p style='color:#fff;'>Nenhuma dúvida frequente cadastrada.</p>";
 
-        // Benefícios
         let beneficiosHTML = '';
         if (allData.beneficios) {
           allData.beneficios.forEach(row => {
@@ -301,7 +304,6 @@
           document.getElementById("bloco-beneficios").innerHTML = beneficiosHTML || "<p style='color:#fff;'>Nenhum benefício cadastrado ainda.</p>";
         }
 
-        // Promoções
         let promocoesHTML = '';
         if (allData.promocoes) {
           allData.promocoes.forEach(row => {
@@ -317,7 +319,6 @@
           document.getElementById("bloco-promocoes").innerHTML = promocoesHTML || "<p style='color:#fff;'>Nenhuma promoção cadastrada ainda.</p>";
         }
 
-        // Depoimentos
         let depoimentosHTML = '';
         if (allData.depoimentos) {
           allData.depoimentos.forEach(row => {
@@ -341,10 +342,4 @@
 
     window.onload = carregarDados;
 </script>
-
-  <script src="script.js"></script>
-
-</body>
-
 </html>
-<p style="color: red;">VERSÃO DE TESTE – atualizado agora às 23h15</p>
