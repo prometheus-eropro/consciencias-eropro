@@ -1,0 +1,17 @@
+const resposta = await fetch('URL_DO_SCRIPT', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ login: emailOuCelular, senha: senha })
+});
+
+const data = await resposta.json();
+
+if (data.acesso) {
+  sessionStorage.setItem('cliente', data.cliente);
+  sessionStorage.setItem('modelo', data.modelo);
+  sessionStorage.setItem('prompt', data.prompt);
+  sessionStorage.setItem('nome', data.consciencia_nome);
+  window.location.href = 'chat.html';
+} else {
+  msg.textContent = data.mensagem || "Erro ao acessar";
+}

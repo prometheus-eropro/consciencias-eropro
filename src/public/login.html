@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Login PROMETHEUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #232630;
+      padding: 2em;
+      border-radius: 1em;
+      width: 100%;
+      max-width: 360px;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.8em;
+      margin-top: 1em;
+      border-radius: 0.5em;
+      border: none;
+    }
+    button {
+      background: #3ee770;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+    }
+    .erro { color: red; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Área de Acesso</h2>
+    <input type="text" id="emailOuCelular" placeholder="Email ou celular">
+    <input type="password" id="senha" placeholder="Senha">
+    <button onclick="logar()">Entrar</button>
+    <div id="msg" class="erro"></div>
+  </div>
+
+  <script>
+    async function logar() {
+      const emailOuCelular = document.getElementById('emailOuCelular').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const msg = document.getElementById('msg');
+
+      if (!emailOuCelular || !senha) {
+        msg.textContent = "Preencha todos os campos!";
+        return;
+      }
+
+      try {
+        const resposta = await fetch('/api/validar-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailOuCelular, senha })
+        });
+
+        const dados = await resposta.json();
+
+        if (dados.acesso) {
+          // Salvando dados no sessionStorage
+          sessionStorage.setItem('emailOuCelular', emailOuCelular);
+          sessionStorage.setItem('senha', senha);
+
+          // Redirecionando para a área do assinante
+          window.location.href = 'area-assinante.html';
+        } else {
+          msg.textContent = "Acesso negado! Verifique seus dados.";
+        }
+      } catch (error) {
+        msg.textContent = "Erro ao conectar com o servidor.";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+function doPost(e) {
+  let dados;
+  try {
+    dados = JSON.parse(e.postData.contents);
+  } catch (erro) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "erro", acesso: false, mensagem: "Requisição inválida" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const login = (dados.login || "").trim();
+  const senha = dados.senha || "";
+
+  const ss = SpreadsheetApp.openById("1RyOi80PamsOKEomBfW42fGYSP9FBFLYMB4-giQcCK6c"); // Seu ID
+  const sheetUsers = ss.getSheetByName("ACESSOS_CONSC");
+  const sheetConsc = ss.getSheetByName("ConsciêncIAs");
+  const sheetLogs = ss.getSheetByName("LOGS"); // se quiser log
+
+  const dadosUsuarios = sheetUsers.getDataRange().getValues();
+
+  let usuarioEncontrado = null;
+
+  for (let i = 1; i < dadosUsuarios.length; i++) {
+    const registro = dadosUsuarios[i];
+    const emailOuCelular = registro[0] ? registro[0].toString().trim() : "";
+    if (emailOuCelular.toLowerCase() === login.toLowerCase()) {
+      usuarioEncontrado = registro;
+      break;
+    }
+  }
+
+  let resposta = { status: "", acesso: false };
+  const dataHoraAtual = new Date();
+
+  if (!usuarioEncontrado) {
+    resposta.status = "erro";
+    resposta.mensagem = "Usuário não encontrado.";
+    if (sheetLogs) sheetLogs.appendRow([dataHoraAtual, login, "falha - usuário não encontrado"]);
+  } else {
+    const senhaCorreta = usuarioEncontrado[1] || "";
+    if (senhaCorreta !== senha) {
+      resposta.status = "erro";
+      resposta.mensagem = "Senha incorreta.";
+      if (sheetLogs) sheetLogs.appendRow([dataHoraAtual, login, "falha - senha incorreta"]);
+    } else {
+      const ativo = (usuarioEncontrado[2] || "").toLowerCase();
+      if (ativo !== "sim") {
+        resposta.status = "erro";
+        resposta.mensagem = "Usuário inativo.";
+        if (sheetLogs) sheetLogs.appendRow([dataHoraAtual, login, "falha - usuário inativo"]);
+      } else {
+        // Sucesso
+        resposta.status = "ok";
+        resposta.acesso = true;
+        resposta.nome_cliente = usuarioEncontrado[3] || "";
+        resposta.data_ativacao = usuarioEncontrado[5] || "";
+        resposta.nome_consciencia = usuarioEncontrado[4] || "";
+
+        // Buscar detalhes da consciência na aba "ConsciêncIAs"
+        const nomeConsc = (usuarioEncontrado[4] || "").toString().trim();
+        const dadosConsc = sheetConsc.getDataRange().getValues();
+        let encontrada = dadosConsc.find((linha, idx) => idx > 0 && linha[0]?.toString().trim() === nomeConsc);
+
+        if (encontrada) {
+          resposta.consciencia_detalhes = {
+            nome: encontrada[0] || "",
+            resumo: encontrada[1] || "",
+            descricao: encontrada[2] || "",
+            como_usar: encontrada[3] || "",
+            prompt: encontrada[4] || "",
+            link_demo: encontrada[5] || "",
+            link_premium: encontrada[6] || "",
+            valor: encontrada[7] || "",
+            promocao: encontrada[8] || ""
+          };
+        } else {
+          resposta.mensagem = "Consciência não encontrada.";
+        }
+
+        if (sheetLogs) sheetLogs.appendRow([dataHoraAtual, login, "sucesso"]);
+      }
+    }
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(resposta))
+    .setMimeType(ContentService.MimeType.JSON);
+}, script da planilha, <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>ConsciêncIAs PROMETHEUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #dff6f3, #7ce6f0);
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2em;
+      font-weight: 900;
+      margin-bottom: 25px;
+      color: #0a2f33;
+    }
+
+    input {
+      padding: 12px;
+      margin: 6px;
+      width: 260px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 12px 24px;
+      background: #1c9baf;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #138294;
+    }
+
+    #resposta {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1em;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>ConsciêncIAs PROMETHEUS</h1>
+
+  <input type="text" id="email" placeholder="Digite seu email ou celular">
+  <input type="password" id="senha" placeholder="Digite sua senha">
+  <button onclick="verificarAcesso()">Acessar</button>
+
+  <div id="resposta"></div>
+
+  <script>
+    async function verificarAcesso() {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const resposta = document.getElementById('resposta');
+
+      if (!email || !senha) {
+        resposta.textContent = 'Preencha todos os campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbzfn4lH6YudDbDNmFmDp6tT-OF8L3ZOpTwCtAhAdNf5VW9fCKeNedPt13Nxe_fbG6b-Vg/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailOuCelular: email, senha })
+        });
+
+        const data = await res.json();
+        if (data.liberado) {
+          location.href = 'index.html';
+        } else {
+          resposta.textContent = 'Acesso negado.';
+        }
+      } catch (err) {
+        resposta.textContent = 'Erro ao conectar. Tente novamente.';
+      }
+    }
+  </script>
+</body>
+</html>, area do assinante , <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>ConsciêncIAs PROMETHEUS – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #dff6f3, #7ce6f0);
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2em;
+      font-weight: 900;
+      margin-bottom: 25px;
+      color: #0a2f33;
+    }
+
+    input {
+      padding: 12px;
+      margin: 6px;
+      width: 260px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 12px 24px;
+      background: #1c9baf;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #138294;
+    }
+
+    #msg {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1em;
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>ConsciêncIAs PROMETHEUS</h1>
+
+  <input type="text" id="emailOuCelular" placeholder="Email ou celular">
+  <input type="password" id="senha" placeholder="Senha">
+  <button onclick="logar()">Entrar</button>
+
+  <div id="msg"></div>
+
+  <script>
+    async function logar() {
+      const emailOuCelular = document.getElementById('emailOuCelular').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const msg = document.getElementById('msg');
+
+      if (!emailOuCelular || !senha) {
+        msg.textContent = "Preencha todos os campos!";
+        return;
+      }
+
+      try {
+        const resposta = await fetch('https://script.google.com/macros/s/AKfycbzfn4lH6YudDbDNmFmDp6tT-OF8L3ZOpTwCtAhAdNf5VW9fCKeNedPt13Nxe_fbG6b-Vg/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login: emailOuCelular, senha: senha })
+        });
+
+        const retorno = await resposta.json();
+
+        if (retorno.data.status === "autorizado") {
+          sessionStorage.setItem('cliente', retorno.data.cliente);
+          sessionStorage.setItem('consciencias', JSON.stringify(retorno.data.consciencias));
+          sessionStorage.setItem('resumo', retorno.data.resumo);
+          sessionStorage.setItem('link', retorno.data.link);
+          window.location.href = 'area-assinante.html';
+        } else {
+          msg.textContent = "Acesso negado! Verifique seus dados.";
+        }
+
+      } catch (error) {
+        msg.textContent = "Erro ao conectar com o servidor.";
+      }
+    }
+  </script>
+</body>
+</html>login, agora resolva 100% pra mim

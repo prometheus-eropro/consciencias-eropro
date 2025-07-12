@@ -1,0 +1,6 @@
+email_ou_celular,senha,ativo,data_ativacao,nome_cliente,data_exclusão,cons_cias
+teste@email.com,teste123,sim,21/06/2025,João da Silva,,Agon EROPRO
+27999990000,segredo01,sim,21/06/2025,Cliente Celular,,
+exemplo@dom.com,abc123,não,20/06/2025,Bloqueado Exemplo,,
+edgar@totalcont.net,eromaster,sim,23/06/2025,edgar,,"Raízes EROPRO, Agron EROPRO"
+adm@gmail.com,adm,sim,24/06/2025,edgar,,Raízes EROPRO

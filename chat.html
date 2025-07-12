@@ -1,0 +1,23 @@
+const modelo = sessionStorage.getItem('modelo');
+const prompt = sessionStorage.getItem('prompt');
+const cliente = sessionStorage.getItem('cliente');
+
+async function enviarPergunta() {
+  const pergunta = document.getElementById("pergunta").value;
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer SUA_API_KEY_AQUI"
+    },
+    body: JSON.stringify({
+      model: modelo,
+      messages: [
+        { role: "system", content: prompt },
+        { role: "user", content: pergunta }
+      ]
+    })
+  });
+  const resposta = await res.json();
+  document.getElementById("resposta").textContent = resposta.choices[0].message.content;
+}
