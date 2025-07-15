@@ -370,3 +370,26 @@ carregarDados();
   <div id="faq" style="display: none; margin-top: 1em;"></div>
 
 </footer>
+<script>
+function toggleSection(id) {
+  var section = document.getElementById(id);
+  if (section.style.display === "none") {
+    section.style.display = "block";
+  } else {
+    section.style.display = "none";
+  }
+}
+
+// Carrega os dados extras do JSON (benefícios, promoções, etc.)
+fetch("dados/dados.json")
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById("beneficios").innerHTML = data.beneficios.join("<br>");
+    document.getElementById("promocoes").innerHTML = data.promocoes.join("<br>");
+    document.getElementById("depoimentos").innerHTML = data.depoimentos.join("<br>");
+    document.getElementById("faq").innerHTML = data.faq.map(item => "<strong>" + item.pergunta + "</strong><br>" + item.resposta).join("<br><br>");
+  });
+</script>
+
+</body>
+</html>
