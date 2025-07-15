@@ -1,0 +1,77 @@
+<script>
+(async () => {
+  const login = localStorage.getItem("login");
+  const senha = localStorage.getItem("senha");
+  const lista = JSON.parse(localStorage.getItem("consciencias") || "[]");
+  const idConscienciaAtual = "raizeseropro";  // <-- altere aqui!
+
+  if (!login || !senha) {
+    alert("Você precisa estar logado.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (!lista.includes(idConscienciaAtual)) {
+    alert("Você não tem acesso a esta ConsciêncIA.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Se passou, segue o carregamento do chat...
+})();
+</script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Raízes EROPRO</title>
+  <style>
+    #loginModal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+    }
+    #loginBox {
+      background: white; padding: 20px; border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginModal">
+    <div id="loginBox">
+      <h2>Acesso restrito à ConsciêncIA Raízes</h2>
+      <input type="text" id="email" placeholder="E-mail ou celular"><br><br>
+      <input type="password" id="senha" placeholder="Senha"><br><br>
+      <button onclick="verificarLogin()">Entrar</button>
+      <p id="mensagem"></p>
+    </div>
+  </div>
+
+  <div id="chat" style="display:none;">
+    <h1>ConsciêncIA Raízes EROPRO</h1>
+    <div id="resposta">Olá! Sou sua mentora em olericultura regenerativa.</div>
+  </div>
+
+  <script>
+    function verificarLogin() {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const id = "Raízes EROPRO";
+
+      fetch("https://script.google.com/macros/s/AKfycbxm7NoB3RSPEOF13LT4Ici69Vb67nX8eSGfcKSrjt-4JMNeYx0Zfe9I0lqAeBIiB6O5/exec", {
+        method: "POST",
+        body: JSON.stringify({ email, senha, id }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === "autorizado") {
+          document.getElementById("loginModal").style.display = "none";
+          document.getElementById("chat").style.display = "block";
+        } else {
+          document.getElementById("mensagem").innerText = "Acesso negado. Fale com: @edgar__rocha_oliveira ou WhatsApp 28 99969-2303";
+        }
+      });
+    }
+  </script>
+</body>
+</html>

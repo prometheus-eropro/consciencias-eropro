@@ -1,0 +1,67 @@
+<script>
+(async () => {
+  const login = localStorage.getItem("login");
+  const senha = localStorage.getItem("senha");
+  const lista = JSON.parse(localStorage.getItem("consciencias") || "[]");
+  const idConscienciaAtual = "pontexeropro";  // <-- altere aqui!
+
+  if (!login || !senha) {
+    alert("Você precisa estar logado.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (!lista.includes(idConscienciaAtual)) {
+    alert("Você não tem acesso a esta ConsciêncIA.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Se passou, segue o carregamento do chat...
+})();
+</script>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pontex EROPRO</title>
+  <style>
+    body { font-family: Arial; background: #f0f0f0; padding: 2em; }
+    input, textarea { width: 100%; padding: 1em; margin: 0.5em 0; border-radius: 8px; border: 1px solid #ccc; }
+    button { padding: 0.8em 2em; background: #3ee770; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-right: 1em; }
+    #resposta { white-space: pre-line; background: #fff; padding: 1em; border-radius: 8px; margin-top: 1em; min-height: 100px; }
+  </style>
+</head>
+<body>
+  <h2>ConsciêncIA: Pontex EROPRO</h2>
+
+  <input type="text" id="login" placeholder="Seu e-mail ou celular">
+  <input type="password" id="senha" placeholder="Sua senha de acesso">
+  <textarea id="pergunta" placeholder="Digite sua pergunta..." rows="4"></textarea>
+  <div>
+    <button onclick="enviarPergunta()">Enviar</button>
+    <button onclick="novaConversa()">💬 Nova Conversa</button>
+    <button onclick="salvarConversa()">⬇️ Salvar Conversa</button>
+    <button onclick="sair()">🚪 Sair</button>
+  </div>
+  <div id="resposta"></div>
+
+  <script>
+    const loginUser = localStorage.getItem("usuario");
+    const liberado = localStorage.getItem("liberado");
+    const estaPagina = window.location.pathname.split("/").pop();
+    if (!loginUser || liberado !== estaPagina) {
+      alert("Você precisa fazer login primeiro.");
+      window.location.href = "login.html";
+    }
+
+    const id = "pontexeropro";
+    const loginInput = document.getElementById("login");
+    const senhaInput = document.getElementById("senha");
+    const respostaDiv = document.getElementById("resposta");
+    const perguntaInput = document.getElementById("pergunta");
+
+    if (localStorage.login) loginInput.value = localStorage.login;
+    if (localStorage.senha) senhaInput.value = localStorage.senha;
+    if (localStorage.ultimaResposta) respostaDiv.innerText = localStorage.ultimaResposta;
+    if (localStorage.ultimaPer
