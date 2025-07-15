@@ -370,33 +370,3 @@ carregarDados();
   <div id="faq" style="display: none; margin-top: 1em;"></div>
 
 </footer>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>ConsciêncIAs PROMETHEUS EROPRO</title>
-</head>
-<body>
-    <h1>ConsciêncIAs PROMETHEUS EROPRO</h1>
-    <div id="consciencias-container"></div>
-
-    <script>
-        fetch('dados/consciencias.json')
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('consciencias-container');
-                data.consciencias.forEach(c => {
-                    const div = document.createElement('div');
-                    div.innerHTML = `
-                        <h2>${c.nome}</h2>
-                        <p>${c.descricao}</p>
-                        <a href="${c.link}">Acessar</a>
-                    `;
-                    container.appendChild(div);
-                });
-            });
-    </script>
-</body>
-</html>
-
-</html>
