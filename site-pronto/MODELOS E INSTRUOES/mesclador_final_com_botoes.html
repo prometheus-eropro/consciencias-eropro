@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mesclador de ConsciêncIAs PROMETHEUS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        textarea, pre { width: 100%; padding: 10px; font-size: 14px; }
+        button { padding: 10px 15px; margin: 5px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🧠 Mesclador de ConsciêncIAs PROMETHEUS</h2>
+
+    <label for="novoJson">Cole abaixo o bloco novo (ConsciêncIA):</label><br>
+    <textarea id="novoJson" rows="15" placeholder="Cole aqui o JSON da nova ConsciêncIA..."></textarea><br>
+
+    <button onclick="adicionarConsciencia()">➕ Adicionar</button>
+    <button onclick="limparEntrada()">🧹 Limpar Entrada</button>
+    <button onclick="copiarResultado()">📋 Copiar Resultado</button>
+
+    <h3>📦 Resultado final (cole no arquivo consciencias.json):</h3>
+    <pre id="resultado"></pre>
+
+<script>
+    let conscienciasExistente = [];
+
+    function adicionarConsciencia() {
+        const novoJson = document.getElementById("novoJson").value.trim();
+        try {
+            let nova = JSON.parse(novoJson);
+            conscienciasExistente.push(nova);
+            document.getElementById("resultado").textContent = JSON.stringify(conscienciasExistente, null, 2);
+        } catch (e) {
+            document.getElementById("resultado").textContent = "❌ Erro ao processar o JSON. Verifique a sintaxe.";
+        }
+    }
+
+    function limparEntrada() {
+        document.getElementById("novoJson").value = "";
+    }
+
+    function copiarResultado() {
+        const resultado = document.getElementById("resultado");
+        const textArea = document.createElement("textarea");
+        textArea.value = resultado.textContent;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert("✅ Resultado copiado!");
+    }
+</script>
+
+</body>
+</html>

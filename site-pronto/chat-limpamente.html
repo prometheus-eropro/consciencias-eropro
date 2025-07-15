@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat - Limpa Mente</title>
+  <style>
+    body { font-family: Arial; padding: 2em; background: #f0f8ff; }
+    input, textarea { width: 100%; margin-bottom: 1em; padding: 0.8em; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #3ee770; padding: 0.8em 2em; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    #resposta { margin-top: 2em; white-space: pre-line; background: #fff; padding: 1em; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>ConsciêncIA: Limpa Mente</h2>
+
+  <input type="text" id="login" placeholder="Seu e-mail ou celular">
+  <input type="password" id="senha" placeholder="Sua senha de acesso">
+  <textarea id="pergunta" placeholder="Digite sua pergunta aqui..." rows="4"></textarea>
+  <button onclick="enviarPergunta()">Enviar</button>
+
+  <div id="resposta"></div>
+
+  <script>
+    async function enviarPergunta() {
+      const login = document.getElementById("login").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const pergunta = document.getElementById("pergunta").value.trim();
+
+      if (!login || !senha || !pergunta) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      const payload = {
+        login,
+        senha,
+        id: "limpamente",
+        pergunta
+      };
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      const respostaDiv = document.getElementById("resposta");
+
+      if (data.resposta) {
+        respostaDiv.innerText = data.resposta;
+      } else {
+        respostaDiv.innerText = "Erro: " + (data.erro || "Desconhecido");
+      }
+    }
+  </script>
+</body>
+</html>
