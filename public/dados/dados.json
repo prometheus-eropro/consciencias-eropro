@@ -1,0 +1,29 @@
+{
+  "faq": [
+    {
+      "pergunta": "Como funciona o acesso?",
+      "resposta": "Escolha sua ConsciêncIA, faça o pagamento (válido por 30 dias)..."
+    },
+    {
+      "pergunta": "Posso testar antes de assinar?",
+      "resposta": "Sim! Entre em contato pelo WhatsApp para liberar um teste rápido."
+    }
+  ],
+  "beneficios": [
+     [
+    "Acesso imediato a assistentes poderosos",
+    "Plataforma leve e segura",
+    "Suporte técnico por WhatsApp"
+    ]
+  ],
+  "promocoes": [
+    {
+      "titulo": "teste",
+      "descricao": "faa teste - Valor: 39 - ate 30/07"
+    }
+  ],
+  "depoimentos": [
+    "Essas ConsciêncIAs me ajudam diariamente no trabalho.",
+    "Mudou minha forma de lidar com decisões e produtividade."
+  ]
+}
