@@ -370,26 +370,36 @@ carregarDados();
   <div id="faq" style="display: none; margin-top: 1em;"></div>
 
 </footer>
-<script>
-function toggleSection(id) {
-  var section = document.getElementById(id);
-  if (section.style.display === "none") {
-    section.style.display = "block";
-  } else {
-    section.style.display = "none";
-  }
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>ConsciêncIAs PROMETHEUS EROPRO</title>
+</head>
+<body>
+    <h1>ConsciêncIAs PROMETHEUS EROPRO</h1>
+    <div id="consciencias-container"></div>
 
-// Carrega os dados extras do JSON (benefícios, promoções, etc.)
-fetch("dados/dados.json")
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById("beneficios").innerHTML = data.beneficios.join("<br>");
-    document.getElementById("promocoes").innerHTML = data.promocoes.join("<br>");
-    document.getElementById("depoimentos").innerHTML = data.depoimentos.join("<br>");
-    document.getElementById("faq").innerHTML = data.faq.map(item => "<strong>" + item.pergunta + "</strong><br>" + item.resposta).join("<br><br>");
-  });
-</script>
+    <script>
+        fetch('dados/consciencias.json')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('consciencias-container');
+                data.consciencias.forEach(c => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <h2>${c.nome}</h2>
+                        <p>${c.descricao}</p>
+                        <a href="${c.link}">Acessar</a>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+    </script>
+
+<script src="verifica-acesso.js"></script>
 
 </body>
+</html>
+
 </html>
