@@ -1,76 +1,165 @@
-<script>
-(async () => {
-  const login = localStorage.getItem("login");
-  const senha = localStorage.getItem("senha");
-  const lista = JSON.parse(localStorage.getItem("consciencias") || "[]");
-  const idConscienciaAtual = "raizeseropro";  // <-- altere aqui!
-
-  if (!login || !senha) {
-    alert("Você precisa estar logado.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  if (!lista.includes(idConscienciaAtual)) {
-    alert("Você não tem acesso a esta ConsciêncIA.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  // Se passou, segue o carregamento do chat...
-})();
-</script>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Raízes EROPRO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    #loginModal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #eaf7ff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
-    #loginBox {
-      background: white; padding: 20px; border-radius: 8px;
+
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      margin: auto;
+      padding: 10px;
+    }
+
+    #mensagens {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      min-height: 400px;
+      font-size: 16px;
+    }
+
+    .user {
+      color: #0074d9;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .resposta {
+      margin-bottom: 10px;
+    }
+
+    #pergunta-box {
+      display: flex;
+      gap: 10px;
+    }
+
+    #pergunta {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .botoes-acao {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 600px) {
+      #chat {
+        padding: 10px;
+      }
+
+      button {
+        flex: 1;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="loginModal">
-    <div id="loginBox">
-      <h2>Acesso restrito à ConsciêncIA Raízes</h2>
-      <input type="text" id="email" placeholder="E-mail ou celular"><br><br>
-      <input type="password" id="senha" placeholder="Senha"><br><br>
-      <button onclick="verificarLogin()">Entrar</button>
-      <p id="mensagem"></p>
+  <div id="chat">
+    <h2>Raízes EROPRO</h2>
+    <div id="mensagens"></div>
+
+    <div id="pergunta-box">
+      <input type="text" id="pergunta" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter'){enviar()}" />
+      <button onclick="enviar()">Enviar</button>
+    </div>
+
+    <div class="botoes-acao">
+      <button onclick="novaConversa()">Nova Conversa</button>
+      <button onclick="salvar()">Salvar Conversa</button>
+      <button onclick="sair()">Sair</button>
     </div>
   </div>
 
-  <div id="chat" style="display:none;">
-    <h1>ConsciêncIA Raízes EROPRO</h1>
-    <div id="resposta">Olá! Sou sua mentora em olericultura regenerativa.</div>
-  </div>
-
   <script>
-    function verificarLogin() {
-      const email = document.getElementById('email').value;
-      const senha = document.getElementById('senha').value;
-      const id = "raizeseropro";
+    const id = "raizes";
+    const mensagens = [];
 
-      fetch("https://script.google.com/macros/s/AKfycbxm7NoB3RSPEOF13LT4Ici69Vb67nX8eSGfcKSrjt-4JMNeYx0Zfe9I0lqAeBIiB6O5/exec", {
+    function verificarAcesso() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+      if (!usuario || !usuario.cons || !usuario.cons.includes(id)) {
+        alert("❌ Você não tem acesso a esta ConsciêncIA.\n\nEntre em contato:\n📧 assistentes.prometheus@gmail.com\n📱 WhatsApp: (28) 99969-2303\n📷 Instagram: @edgar_rocha_oliveira");
+        return false;
+      }
+      return true;
+    }
+
+    async function enviar() {
+      if (!verificarAcesso()) return;
+
+      const input = document.getElementById("pergunta");
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      mensagens.push({ role: "user", content: texto });
+      atualizarChat();
+
+      const resposta = await fetch("/api/chat", {
         method: "POST",
-        body: JSON.stringify({ email, senha, id }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if(data.status === "autorizado") {
-          document.getElementById("loginModal").style.display = "none";
-          document.getElementById("chat").style.display = "block";
-        } else {
-          document.getElementById("mensagem").innerText = "Acesso negado. Fale com: @edgar__rocha_oliveira ou WhatsApp 28 99969-2303";
-        }
-      });
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, pergunta: texto })
+      }).then(res => res.json());
+
+      mensagens.push({ role: "assistant", content: resposta.resposta });
+      atualizarChat();
+      input.value = "";
+    }
+
+    function atualizarChat() {
+      const div = document.getElementById("mensagens");
+      div.innerHTML = mensagens.map(m =>
+        `<div class="${m.role === 'user' ? 'user' : 'resposta'}"><strong>${m.role === 'user' ? 'Você' : 'Resposta'}:</strong> ${m.content}</div>`
+      ).join("");
+      div.scrollTop = div.scrollHeight;
+    }
+
+    function novaConversa() {
+      mensagens.length = 0;
+      atualizarChat();
+    }
+
+    function salvar() {
+      let texto = mensagens.map(m => `${m.role === 'user' ? 'Você' : 'Resposta'}: ${m.content}`).join("\n\n");
+      const blob = new Blob([texto], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `chat-raizes.txt`;
+      a.click();
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
     }
   </script>
 </body>

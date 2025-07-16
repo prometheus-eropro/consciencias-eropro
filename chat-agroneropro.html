@@ -1,67 +1,166 @@
-<script>
-(async () => {
-  const login = localStorage.getItem("login");
-  const senha = localStorage.getItem("senha");
-  const lista = JSON.parse(localStorage.getItem("consciencias") || "[]");
-  const idConscienciaAtual = "agroneropro";  // <-- altere aqui!
-
-  if (!login || !senha) {
-    alert("Você precisa estar logado.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  if (!lista.includes(idConscienciaAtual)) {
-    alert("Você não tem acesso a esta ConsciêncIA.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  // Se passou, segue o carregamento do chat...
-})();
-</script>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Agron EROPRO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial; background: #f0f0f0; padding: 2em; }
-    input, textarea { width: 100%; padding: 1em; margin: 0.5em 0; border-radius: 8px; border: 1px solid #ccc; }
-    button { padding: 0.8em 2em; background: #3ee770; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-right: 1em; }
-    #resposta { white-space: pre-line; background: #fff; padding: 1em; border-radius: 8px; margin-top: 1em; min-height: 100px; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #eaf7ff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      margin: auto;
+      padding: 10px;
+    }
+
+    #mensagens {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      min-height: 400px;
+      font-size: 16px;
+    }
+
+    .user {
+      color: #0074d9;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .resposta {
+      margin-bottom: 10px;
+    }
+
+    #pergunta-box {
+      display: flex;
+      gap: 10px;
+    }
+
+    #pergunta {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .botoes-acao {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 600px) {
+      #chat {
+        padding: 10px;
+      }
+
+      button {
+        flex: 1;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>ConsciêncIA: Agron EROPRO</h2>
+  <div id="chat">
+    <h2>Agron EROPRO</h2>
+    <div id="mensagens"></div>
 
-  <input type="text" id="login" placeholder="Seu e-mail ou celular">
-  <input type="password" id="senha" placeholder="Sua senha de acesso">
-  <textarea id="pergunta" placeholder="Digite sua pergunta..." rows="4"></textarea>
-  <div>
-    <button onclick="enviarPergunta()">Enviar</button>
-    <button onclick="novaConversa()">💬 Nova Conversa</button>
-    <button onclick="salvarConversa()">⬇️ Salvar Conversa</button>
-    <button onclick="sair()">🚪 Sair</button>
+    <div id="pergunta-box">
+      <input type="text" id="pergunta" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter'){enviar()}" />
+      <button onclick="enviar()">Enviar</button>
+    </div>
+
+    <div class="botoes-acao">
+      <button onclick="novaConversa()">Nova Conversa</button>
+      <button onclick="salvar()">Salvar Conversa</button>
+      <button onclick="sair()">Sair</button>
+    </div>
   </div>
-  <div id="resposta"></div>
 
   <script>
-    const loginUser = localStorage.getItem("usuario");
-    const liberado = localStorage.getItem("liberado");
-    const estaPagina = window.location.pathname.split("/").pop();
-    if (!loginUser || liberado !== estaPagina) {
-      alert("Você precisa fazer login primeiro.");
-      window.location.href = "login.html";
+    const id = "agron";
+    const mensagens = [];
+
+    function verificarAcesso() {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+      if (!usuario || !usuario.cons || !usuario.cons.includes(id)) {
+        alert("❌ Você não tem acesso a esta ConsciêncIA.\n\nEntre em contato:\n📧 assistentes.prometheus@gmail.com\n📱 WhatsApp: (28) 99969-2303\n📷 Instagram: @edgar_rocha_oliveira");
+        return false;
+      }
+      return true;
     }
 
-    const id = "agroneropro";
-    const loginInput = document.getElementById("login");
-    const senhaInput = document.getElementById("senha");
-    const respostaDiv = document.getElementById("resposta");
-    const perguntaInput = document.getElementById("pergunta");
+    async function enviar() {
+      if (!verificarAcesso()) return;
 
-    if (localStorage.login) loginInput.value = localStorage.login;
-    if (localStorage.senha) senhaInput.value = localStorage.senha;
-    if (localStorage.ultimaResposta) respostaDiv.innerText = localStorage.ultimaResposta;
-    if (localStorage.ultimaPer
+      const input = document.getElementById("pergunta");
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      mensagens.push({ role: "user", content: texto });
+      atualizarChat();
+
+      const resposta = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, pergunta: texto })
+      }).then(res => res.json());
+
+      mensagens.push({ role: "assistant", content: resposta.resposta });
+      atualizarChat();
+      input.value = "";
+    }
+
+    function atualizarChat() {
+      const div = document.getElementById("mensagens");
+      div.innerHTML = mensagens.map(m =>
+        `<div class="${m.role === 'user' ? 'user' : 'resposta'}"><strong>${m.role === 'user' ? 'Você' : 'Resposta'}:</strong> ${m.content}</div>`
+      ).join("");
+      div.scrollTop = div.scrollHeight;
+    }
+
+    function novaConversa() {
+      mensagens.length = 0;
+      atualizarChat();
+    }
+
+    function salvar() {
+      let texto = mensagens.map(m => `${m.role === 'user' ? 'Você' : 'Resposta'}: ${m.content}`).join("\n\n");
+      const blob = new Blob([texto], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `chat-${id}.txt`;
+      a.click();
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
