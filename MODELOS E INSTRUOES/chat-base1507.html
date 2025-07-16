@@ -1,0 +1,76 @@
+<!-- chat-base.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>NOME_DA_CONSCIENCIA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #eef9ff; }
+    #chat { padding: 20px; max-width: 800px; margin: auto; }
+    .user { color: blue; margin-top: 1em; }
+    .resposta { margin-bottom: 1em; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>NOME_DA_CONSCIENCIA</h2>
+    <div id="mensagens"></div>
+    <input type="text" id="pergunta" placeholder="Digite sua pergunta..." style="width: 100%;" />
+    <button onclick="enviar()">Enviar</button>
+    <button onclick="novaConversa()">Nova Conversa</button>
+    <button onclick="sair()">Sair</button>
+  </div>
+
+  <script>
+    // 🔒 Verificação de login
+    const login = localStorage.getItem("usuario");
+    const liberado = localStorage.getItem("liberado");
+    const estaPagina = window.location.pathname.split("/").pop();
+
+    if (!login || liberado !== estaPagina) {
+      alert("Você precisa fazer login primeiro.");
+      window.location.href = "login.html";
+    }
+
+    const id = "ID_DA_CONSCIENCIA"; // Ex: "raizes_eropro"
+    const mensagens = [];
+
+    async function enviar() {
+      const input = document.getElementById("pergunta");
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      mensagens.push({ role: "user", content: texto });
+      atualizarChat();
+
+      const resposta = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, pergunta: texto })
+      }).then(res => res.json());
+
+      mensagens.push({ role: "assistant", content: resposta.resposta });
+      atualizarChat();
+      input.value = "";
+    }
+
+    function atualizarChat() {
+      const div = document.getElementById("mensagens");
+      div.innerHTML = mensagens.map(m => 
+        `<div class="${m.role === 'user' ? 'user' : 'resposta'}"><strong>${m.role === 'user' ? 'Você' : 'Resposta'}:</strong> ${m.content}</div>`
+      ).join("");
+    }
+
+    function novaConversa() {
+      mensagens.length = 0;
+      atualizarChat();
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

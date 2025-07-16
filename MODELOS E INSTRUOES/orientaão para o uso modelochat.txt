@@ -1,0 +1,33 @@
+🔒 **ConsciêncIAs padronizadas finalizadas.**
+
+Este é o novo modelo visual e funcional para **todas as páginas de chat**, com estilo igual ao site principal, verificação de login, botão de salvar conversa e integração direta com a API (`/api/chat`).
+
+### ✅ Como usar:
+
+1. **Crie uma cópia do arquivo** e renomeie para:
+
+   * `agron-eropro.html`
+   * `pontex-eropro.html`
+   * `raizes-eropro.html`
+   * (e assim por diante)
+
+2. Em cada cópia, **substitua no HTML**:
+
+   * `NOME_DA_CONSCIENCIA` pelo nome da IA (ex: Agron EROPRO)
+   * `ID_DA_CONSCIENCIA` pelo ID cadastrado na planilha (ex: agroneropro)
+
+3. Salve todos os arquivos dentro da pasta `/public`.
+
+4. O sistema de login, controle de acesso e API já funciona automaticamente.
+
+---
+
+Se quiser, posso gerar os 3 arquivos com os nomes certos já prontos para copiar e colar.
+
+Agora, me diga:
+
+* Quer que eu **gere os arquivos agora**?
+* Deseja que eu **crie o botão interno** para facilitar a edição de cada um?
+* Deseja que todos os HTMLs sigam esse mesmo visual, inclusive `termos.html`, `privacidade.html`, etc?
+
+Pronto para o próximo passo.

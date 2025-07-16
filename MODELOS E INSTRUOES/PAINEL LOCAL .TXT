@@ -1,0 +1,36 @@
+<!-- painel-users.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel de Usuários</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f3f3; padding: 20px; }
+    textarea { width: 100%; height: 400px; font-family: monospace; }
+    button { padding: 10px; margin-top: 10px; background: #4caf50; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <h2>Gerenciar users.json</h2>
+  <textarea id="jsonArea"></textarea><br>
+  <button onclick="salvar()">Salvar Alterações</button>
+
+  <script>
+    async function carregar() {
+      const dados = await fetch("/data/users.json").then(r => r.text());
+      document.getElementById("jsonArea").value = dados;
+    }
+
+    async function salvar() {
+      const novoJSON = document.getElementById("jsonArea").value;
+      await fetch("/api/salvar-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conteudo: novoJSON })
+      }).then(() => alert("Salvo com sucesso"));
+    }
+
+    carregar();
+  </script>
+</body>
+</html>
