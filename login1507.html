@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>ConsciêncIAs PROMETHEUS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Seu CSS está ótimo, não alterei */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #dff6f3, #7ce6f0);
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2em;
+      font-weight: 900;
+      margin-bottom: 25px;
+      color: #0a2f33;
+    }
+
+    input {
+      padding: 12px;
+      margin: 6px;
+      width: 260px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 12px 24px;
+      background: #1c9baf;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #138294;
+    }
+
+    #resposta {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1em;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>ConsciêncIAs PROMETHEUS</h1>
+
+  <input type="text" id="email" placeholder="Digite seu email ou celular">
+  <input type="password" id="senha" placeholder="Digite sua senha">
+  <button onclick="verificarAcesso()">Acessar</button>
+
+  <div id="resposta"></div>
+
+  <script>
+    async function verificarAcesso() {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const resposta = document.getElementById('resposta');
+
+      if (!email || !senha) {
+        resposta.textContent = 'Preencha todos os campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('users.json');
+        const usuarios = await res.json();
+
+        const usuario = usuarios.find(u => (u.email === email || u.celular === email) && u.senha === senha);
+
+        if (usuario) {
+          localStorage.setItem('usuario', JSON.stringify(usuario));
+          location.href = `chat-${usuario.cons[0]}_eropro.html`; // abre a primeira ConsciêncIA liberada
+        } else {
+          resposta.textContent = 'Acesso negado.';
+        }
+      } catch (err) {
+        resposta.textContent = 'Erro ao carregar dados.';
+      }
+    }
+
+<script src="users.js"></script>
+
+  </script>
+</body>
+</html>
