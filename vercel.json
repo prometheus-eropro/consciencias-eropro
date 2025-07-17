@@ -1,6 +1,15 @@
+<<<<<<< HEAD
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "outputDirectory": ".",
   "cleanUrls": true
 }
+=======
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": ".",
+  "cleanUrls": true
+}
+>>>>>>> fbb25835c563418442fc77a8c932c7bd1fd82e46
